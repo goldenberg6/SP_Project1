@@ -38,6 +38,7 @@ int calc_closest_cluster(int, int, int, data_point_index * , cluster * );
 void compute_new_sum(int, int, char, int, data_point_index * , cluster * );
 double calc_dist_dp_centroid(int, int, int, data_point_index * , cluster * );
 void printres(int, int, cluster * );
+int is_integer(char *);
 
 vector * read_file_dynamically() {
   vector * head_vec, * curr_vec;
@@ -269,7 +270,7 @@ void printres(int k, int cols, cluster * arr_of_clusters) {
       truncated = (int)shifted;
       result = (double)truncated / 10000.0;
       if (j < cols - 1) {
-        printf("%.4f", result);
+        printf("%.4f,", result);
       } else {
         printf("%.4f\n", result);
       }
@@ -278,18 +279,37 @@ void printres(int k, int cols, cluster * arr_of_clusters) {
 
 }
 
+int is_integer(char *str) {
+    while (*str) {
+        if (*str < '0' || *str > '9') {
+            return 0; 
+        }
+        str++;
+    }
+    return 1;
+}
+
 int main(int argc, char * argv[]) {
   vector * head_vec;
   data_point_index * arr_of_data_points;
   cluster * arr_of_clusters;
   int iter;
-  int rows;
-  int cols;
+  int rows = 0;
+  int cols = 0;
   /*todo check if first is k (not ony input file) */
-  /* handle k, iter not in range */
-  int k = atoi(argv[1]);
+  /* todo free all memory */
+  if(is_integer(argv[1]) == 0){  // todo do we need these validations?
+    printf("%s\n", "An Error Has Occurred");
+    return 1;
+  }
+  else{
+    int k = atoi(argv[1]);
   if (argc == 3) {
     iter = atoi(argv[2]);
+    if(iter <=1 || iter >= 1000){
+      printf("%s\n", "An Error Has Occurred");
+      return 1;
+    }
     head_vec = read_file_dynamically();
 
   } else {
@@ -298,16 +318,24 @@ int main(int argc, char * argv[]) {
       iter = 200;
     } else {
       printf("%s\n", "An Error Has Occurred");
+      return 1;
     }
   }
 
   rows = calc_rows(head_vec);
+  if(k <= 1 || k >= rows){
+    printf("%s\n", "An Error Has Occurred");
+    return 1;
+  }
+
   cols = calc_cols(head_vec);
   arr_of_data_points = from_file_to_arr_of_dp(rows, cols, head_vec);
   arr_of_clusters = from_file_to_arr_of_clusters(arr_of_data_points, k, cols);
 
   kmeans(k, iter, rows, cols, arr_of_data_points, arr_of_clusters);
   printres(k, cols, arr_of_clusters);
+
+  }
 
   return 0;
 
