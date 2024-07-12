@@ -307,7 +307,7 @@ int main(int argc, char * argv[]) {
   if (argc == 3) {
     iter = atoi(argv[2]);
     if(iter <=1 || iter >= 1000){
-      printf("%s\n", "An Error Has Occurred");
+      printf("%s\n", "Invalid maximum iteration!");
       return 1;
     }
     head_vec = read_file_dynamically();
@@ -324,7 +324,7 @@ int main(int argc, char * argv[]) {
 
   rows = calc_rows(head_vec);
   if(k <= 1 || k >= rows){
-    printf("%s\n", "An Error Has Occurred");
+    printf("%s\n", "Invalid number of clusters!");
     return 1;
   }
 
