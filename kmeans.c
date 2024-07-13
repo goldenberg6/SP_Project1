@@ -39,10 +39,14 @@ void compute_new_sum(int, int, char, int, data_point_index * , cluster * );
 double calc_dist_dp_centroid(int, int, int, data_point_index * , cluster * );
 void printres(int, int, cluster * );
 int is_integer(char *);
+void free_head_vec_allocated_memory(struct vector*);
+void free_data_points_arr(data_point_index *, int);
+void free_clusters_arr(cluster *, int, int);
+
 
 vector * read_file_dynamically() {
   vector * head_vec, * curr_vec;
-  cord * head_cord, * curr_cord;
+  cord * head_cord, * curr_cord, * head_cord_new;
   double n;
   char c;
 
@@ -77,8 +81,28 @@ vector * read_file_dynamically() {
   return head_vec;
 }
 
+void free_head_vec_allocated_memory(struct vector *head_vec) {
+    struct vector *curr_vec = head_vec;
+    struct vector *next_vec;
+
+    while (curr_vec != NULL) {
+        struct cord *curr_cord = curr_vec->cords;
+        struct cord *next_cord;
+
+        while (curr_cord != NULL) {
+            next_cord = curr_cord->next;
+            free(curr_cord);
+            curr_cord = next_cord;
+        }
+
+        next_vec = curr_vec->next;
+        free(curr_vec);
+        curr_vec = next_vec;
+    }
+}
+
+
 int calc_rows(vector * head_vec) {
-  /*TODO: take care if there are no rows */
   int rows = 0;
   vector * curr_vec = head_vec;
   while (curr_vec -> next != NULL) {
@@ -171,6 +195,7 @@ void kmeans(int k, int iter, int rows, int cols, data_point_index * arr_of_data_
       for (entry = 0; entry < cols; entry++) {
         arr_of_clusters[cluster_index].centroid[entry] = new_centroid[entry];
       }
+      
       free(new_centroid);
 
     }
@@ -265,14 +290,10 @@ void printres(int k, int cols, cluster * arr_of_clusters) {
   int truncated;
   for (i = 0; i < k; i++) {
     for (j = 0; j < cols; j++) {
-      shifted = arr_of_clusters[i].centroid[j] * 10000.0;
-      shifted += 0.5;
-      truncated = (int)shifted;
-      result = (double)truncated / 10000.0;
       if (j < cols - 1) {
-        printf("%.4f,", result);
+        printf("%.4f,", arr_of_clusters[i].centroid[j]);
       } else {
-        printf("%.4f\n", result);
+        printf("%.4f\n",arr_of_clusters[i].centroid[j]);
       }
     }
   }
@@ -280,13 +301,29 @@ void printres(int k, int cols, cluster * arr_of_clusters) {
 }
 
 int is_integer(char *str) {
-    while (*str) {
+while (*str) {
         if (*str < '0' || *str > '9') {
             return 0; 
         }
         str++;
     }
     return 1;
+}
+
+void free_data_points_arr(data_point_index *data_points_arr, int rows) {
+    for (int i = 0; i < rows; i++) {
+        free(data_points_arr[i].data_point);
+    }
+    free(data_points_arr);
+}
+
+void free_clusters_arr(cluster *clusters_arr, int k, int cols) {
+    int i;
+    for (i = 0; i < k; i++) {
+        free(clusters_arr[i].centroid);
+        free(clusters_arr[i].sum_vec);
+    }
+    free(clusters_arr);
 }
 
 int main(int argc, char * argv[]) {
@@ -298,7 +335,7 @@ int main(int argc, char * argv[]) {
   int cols = 0;
   /*todo check if first is k (not ony input file) */
   /* todo free all memory */
-  if(is_integer(argv[1]) == 0){  // todo do we need these validations?
+  if(is_integer(argv[1]) == 0){  /* todo do we need these validations? */
     printf("%s\n", "An Error Has Occurred");
     return 1;
   }
@@ -329,11 +366,18 @@ int main(int argc, char * argv[]) {
   }
 
   cols = calc_cols(head_vec);
+
   arr_of_data_points = from_file_to_arr_of_dp(rows, cols, head_vec);
+  free_head_vec_allocated_memory(head_vec);
+
   arr_of_clusters = from_file_to_arr_of_clusters(arr_of_data_points, k, cols);
 
   kmeans(k, iter, rows, cols, arr_of_data_points, arr_of_clusters);
   printres(k, cols, arr_of_clusters);
+  
+  free_clusters_arr(arr_of_clusters,k,cols);
+  free_data_points_arr(arr_of_data_points, rows);
+  
 
   }
 
